@@ -218,6 +218,8 @@ def check(
 
         issue_count = len(issues)
         issue_counter = Counter()
+        rules_with_issues = set()
+
         if issue_count > 0:
             click.echo("=== Issues ===")
             for issue in issues:
@@ -232,6 +234,7 @@ def check(
                 )
                 if junitxml:
                     for rule in issue.rules:
+                        rules_with_issues.add(id(rule))
                         junit_results.append({
                             "rule_name": rule.title or str(rule.path),
                             "file_path": str(rule.source) if rule.source else "unknown",
@@ -265,6 +268,15 @@ def check(
                     + f" {additional_fields}"
                 )
                 issue_counter.update((issue.__class__,))
+
+        if junitxml: ## this should add all the OK'ish rules, but doesn't seem to work
+            for rule in check_rules:
+                if id(rule) not in rules_with_issues:
+                    junit_results.append({
+                        "rule_name": rule.title or str(rule.path),
+                        "file_path": str(rule.source) if rule.source else "unknown",
+                        "status": "passed", "severity": "ok"
+                    })
 
         # TODO: From Python 3.10 the commented line below can be used.
         cond_error_count = sum(cond_errors.values())
